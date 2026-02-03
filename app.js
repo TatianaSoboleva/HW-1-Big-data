@@ -247,7 +247,7 @@ function getSentimentIcon(sentiment) {
 
 // Send log row to Google Sheet
 async function logToSheet({ event, review, label, score }) {
-  console.log("LOGGING TO SHEET", { review, label, score });
+  console.log("LOGGING TO SHEET", { event, variant, userId, label, score });
   try {
     await fetch(LOG_URL, {
       method: "POST",
