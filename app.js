@@ -236,17 +236,18 @@ function getSentimentIcon(sentiment) {
 
 // Send log row to Google Sheet
 
+
+
 async function logToSheet({ review, label, score }) {
-  console.log("LOGGING TO SHEET", { review, label, score });
   try {
     await fetch(LOG_URL, {
       method: "POST",
       headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify({
         ts_iso: new Date().toISOString(),
-        review,
-        sentiment: `${label} (${(score * 100).toFixed(1)}%)`,
-        meta: {
+        review, // <-- отдельно!
+        sentiment: `${label} (${(score * 100).toFixed(1)}%)`, // <-- отдельно!
+        meta: { // <-- только инфа о клиенте
           page: location.pathname,
           ua: navigator.userAgent,
           lang: navigator.language,
@@ -259,6 +260,7 @@ async function logToSheet({ review, label, score }) {
     console.error("Logging failed:", e);
   }
 }
+
 
 
 
