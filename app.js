@@ -1,7 +1,7 @@
 // app.js (ES module version using transformers.js for local sentiment classification)
 
 import { pipeline } from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.6/dist/transformers.min.js";
-
+const LOG_URL = "https://script.google.com/macros/s/AKfycbxGjAp-O2c7_UzZjmba7h1TO5rjZRuZTY5Z2RDhbD79HcZIQA5gw5CAlfqdw8Q3sdnl/exec";
 // Global variables
 let reviews = [];
 let apiToken = ""; // kept for UI compatibility, but not used with local inference
@@ -205,6 +205,12 @@ function displaySentiment(result) {
         <i class="fas ${getSentimentIcon(sentiment)} icon"></i>
         <span>${label} (${(score * 100).toFixed(1)}% confidence)</span>
     `;
+    // Log to Google Sheet (do not block UI on logging)
+  logToSheet({
+    review: reviewText.textContent,
+    label,
+    score,
+  });
 }
 
 // Get appropriate icon for sentiment bucket
@@ -216,6 +222,30 @@ function getSentimentIcon(sentiment) {
       return "fa-thumbs-down";
     default:
       return "fa-question-circle";
+  }
+}
+
+// Send log row to Google Sheet
+async function logToSheet({ review, label, score }) {
+  try {
+    await fetch(LOG_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({
+        ts_iso: new Date().toISOString(),
+        review,
+        sentiment: `${label} (${score})`,
+        meta: {
+          page: location.pathname,
+          ua: navigator.userAgent,
+          lang: navigator.language,
+          screen: `${screen.width}x${screen.height}`,
+          tz: Intl.DateTimeFormat().resolvedOptions().timeZone
+        }
+      })
+    });
+  } catch (e) {
+    console.error("Logging failed:", e);
   }
 }
 
