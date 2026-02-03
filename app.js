@@ -16,6 +16,18 @@ const errorElement = document.getElementById("error-message");
 const apiTokenInput = document.getElementById("api-token");
 const statusElement = document.getElementById("status"); // optional status label for model loading
 
+function getOrCreate(key, factory) {
+  const v = localStorage.getItem(key);
+  if (v) return v;
+  const nv = factory();
+  localStorage.setItem(key, nv);
+  return nv;
+}
+
+const userId = getOrCreate("userId", () => crypto.randomUUID());
+const variant = getOrCreate("variant", () => (Math.random() < 0.5 ? "A" : "B"));
+
+
 // Initialize the app
 document.addEventListener("DOMContentLoaded", function () {
   // Load the TSV file (Papa Parse)
@@ -207,10 +219,11 @@ function displaySentiment(result) {
     `;
     // Log to Google Sheet (do not block UI on logging)
   logToSheet({
-    review: reviewText.textContent,
-    label,
-    score,
-  });
+  event: "analyze",
+  review: reviewText.textContent,
+  label,
+  score
+});
 }
 
 // Get appropriate icon for sentiment bucket
@@ -226,7 +239,7 @@ function getSentimentIcon(sentiment) {
 }
 
 // Send log row to Google Sheet
-async function logToSheet({ review, label, score }) {
+async function logToSheet({ event, review, label, score }) {
   console.log("LOGGING TO SHEET", { review, label, score });
   try {
     await fetch(LOG_URL, {
@@ -234,14 +247,17 @@ async function logToSheet({ review, label, score }) {
       headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify({
         ts_iso: new Date().toISOString(),
-        review,
-        sentiment: `${label} (${score})`,
+        event,           // например "analyze"
+        variant,         // "A" или "B"
+        userId,          // стабильный UUID
         meta: {
           page: location.pathname,
           ua: navigator.userAgent,
           lang: navigator.language,
           screen: `${screen.width}x${screen.height}`,
-          tz: Intl.DateTimeFormat().resolvedOptions().timeZone
+          tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          review,         // сам текст
+          sentiment: { label, score } // результат
         }
       })
     });
@@ -249,6 +265,7 @@ async function logToSheet({ review, label, score }) {
     console.error("Logging failed:", e);
   }
 }
+
 
 // Show error message
 function showError(message) {
