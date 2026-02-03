@@ -218,12 +218,19 @@ function displaySentiment(result) {
         <span>${label} (${(score * 100).toFixed(1)}% confidence)</span>
     `;
     // Log to Google Sheet (do not block UI on logging)
-  logToSheet({
-  event: "analyze",
-  review: reviewText.textContent,
-  label,
-  score
+logToSheet({
+  event: "analyze_click",
+  meta: {
+    review: reviewText.textContent,
+    sentiment: { label, score },
+    page: location.pathname,
+    ua: navigator.userAgent,
+    lang: navigator.language,
+    screen: `${screen.width}x${screen.height}`,
+    tz: Intl.DateTimeFormat().resolvedOptions().timeZone
+  }
 });
+
 }
 
 // Get appropriate icon for sentiment bucket
