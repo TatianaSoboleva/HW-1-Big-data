@@ -218,12 +218,7 @@ function displaySentiment(result) {
         <span>${label} (${(score * 100).toFixed(1)}% confidence)</span>
     `;
     // Log to Google Sheet (do not block UI on logging)
-logToSheet({
-  event: "analyze_click",
-  review: reviewText.textContent,
-  label,
-  score,
-});
+logToSheet({ review: reviewText.textContent, label, score });
 
 }
 
@@ -240,25 +235,23 @@ function getSentimentIcon(sentiment) {
 }
 
 // Send log row to Google Sheet
-async function logToSheet({ event, review, label, score }) {
-  console.log("LOGGING TO SHEET", { event, variant, userId, label, score });
+
+async function logToSheet({ review, label, score }) {
+  console.log("LOGGING TO SHEET", { review, label, score });
   try {
     await fetch(LOG_URL, {
       method: "POST",
       headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify({
         ts_iso: new Date().toISOString(),
-        event,           // например "analyze"
-        variant,         // "A" или "B"
-        userId,          // стабильный UUID
+        review,
+        sentiment: `${label} (${(score * 100).toFixed(1)}%)`,
         meta: {
           page: location.pathname,
           ua: navigator.userAgent,
           lang: navigator.language,
           screen: `${screen.width}x${screen.height}`,
-          tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
-          review,         // сам текст
-          sentiment: { label, score } // результат
+          tz: Intl.DateTimeFormat().resolvedOptions().timeZone
         }
       })
     });
@@ -266,6 +259,7 @@ async function logToSheet({ event, review, label, score }) {
     console.error("Logging failed:", e);
   }
 }
+
 
 
 // Show error message
