@@ -73,7 +73,7 @@ Implement the web app with the following exact requirements:
     
 6 **Google Sheets logging (required)**
 - Implement client-side logging to a Google Sheet via a Google Apps Script Web App endpoint (no backend server).
-- In app.js, define a constant like const LOG_URL = "<YOUR_APPS_SCRIPT_WEB_APP_EXEC_URL>";
+- In app.js, define a constant like const LOG_URL = " ";
 - After a successful sentiment inference (i.e., once you have the final label and score), send exactly one log entry via fetch(LOG_URL, ...) using method: "POST" and a JSON body.
 - The JSON body must contain exactly these top-level fields to match the Google Sheet columns:ts_iso: ISO timestamp string, review: the selected review text, sentiment: a string that includes label + confidence, percentage (e.g., POSITIVE (98.7%)), meta: an object with all available client information, at minimum:page (path or URL), ua (user agent), lang (browser language), screen (e.g., 1440x900), tz (IANA timezone)
 
