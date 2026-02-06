@@ -10,6 +10,7 @@ We need a fully client-side web application that can be hosted as static files (
 - Use Papa Parse in the browser to parse the TSV into an array of review texts.  
 - On button click, select a random review, display it, and classify its sentiment using Transformers.js with a supported sentiment model such as `Xenova/distilbert-base-uncased-finetuned-sst-2-english`. [github](https://github.com/huggingface/transformers.js/blob/main/docs/source/tutorials/next.md)
 - Run all inference directly in the browser (no Hugging Face Inference API calls) to avoid CORS issues and ensure the app remains purely static. [huggingface](https://huggingface.co/docs/transformers.js/index)
+- Log each completed analysis to a Google Sheet using a Google Apps Script Web App endpoint (no custom backend). The Google Sheet must receive exactly these columns: ts_iso (ISO timestamp), review (the randomly, selected review text), sentiment (label + confidence, e.g., POSITIVE (98.7%)), meta (JSON string containing all available client info, e.g., page path, user agent, language, screen size, timezone)
 
 The UI should show:
 
@@ -69,8 +70,17 @@ Implement the web app with the following exact requirements:
        - Neutral in all other cases.  
      - Update the UI with the label, confidence percentage, and the corresponding icon.  
      - Re-enable the button and hide the loading indicator when done.
+    
+6 **Google Sheets logging (required)**
+- Implement client-side logging to a Google Sheet via a Google Apps Script Web App endpoint (no backend server).
+- In app.js, define a constant like const LOG_URL = "<YOUR_APPS_SCRIPT_WEB_APP_EXEC_URL>";
+- After a successful sentiment inference (i.e., once you have the final label and score), send exactly one log entry via fetch(LOG_URL, ...) using method: "POST" and a JSON body.
+- The JSON body must contain exactly these top-level fields to match the Google Sheet columns:ts_iso: ISO timestamp string, review: the selected review text, sentiment: a string that includes label + confidence, percentage (e.g., POSITIVE (98.7%)), meta: an object with all available client information, at minimum:page (path or URL), ua (user agent), lang (browser language), screen (e.g., 1440x900), tz (IANA timezone)
 
-6. **UI and styling details**  
+Use Content-Type: "text/plain;charset=utf-8" in request headers to avoid CORS/preflight issues with Apps Script.
+Logging failures must not break the app; catch errors, log them to console, and optionally surface a non-blocking warning in the UI.
+
+7. **UI and styling details**  
    - The UI should include at minimum:  
      - A title for the page.  
      - A section showing the selected review text (use a `<div>` or `<p>`).  
@@ -84,7 +94,7 @@ Implement the web app with the following exact requirements:
      - An error message area that is hidden by default and shown only when needed.  
    - Add simple, clear CSS to make the layout readable and visually distinct (e.g., different colors for positive/negative/neutral).
 
-7. **Error handling**  
+8. **Error handling**  
    - Handle and surface errors for:  
      - TSV load failures (network, 404).  
      - TSV parsing failures.  
@@ -93,12 +103,12 @@ Implement the web app with the following exact requirements:
    - Do not crash silently; log errors to the console and update the error message area with a user-friendly explanation.  
    - Always clear previous error messages when starting a new analysis.
 
-8. **Technical constraints**  
+9. **Technical constraints**  
    - Use only vanilla JavaScript; no frameworks or bundlers (no React, Vue, etc.).  
    - The app must run entirely in the browser with no server-side code or custom backend.  
    - Do not call the Hugging Face Inference API or Router; all inference must go through Transformers.js running locally in the browser. [github](https://github.com/huggingface/transformers.js)
 
-9. **Code quality**  
+10. **Code quality**  
    - Organize `app.js` into small, well-named functions for loading reviews, initializing the model, running analysis, displaying results, and handling errors.  
    - Use clear, concise comments in English explaining key logic, especially around model loading and sentiment mapping.  
    - Avoid global leaks other than the minimal necessary variables.
